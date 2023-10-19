@@ -13,20 +13,11 @@ public class IndexService : IIndexService
     public IndexService(IFileSystemProvider fileSystemProvider)
     {
         _fileSystemProvider = fileSystemProvider;
-        var indexPath = _fileSystemProvider.GetRootDirectory()!.IndexFile;
-        var allLines = File.ReadAllLines(indexPath);
-        foreach (var line in allLines)
-        {
-            var indexRecord = new IndexRecord(line);
-            RecordsByPath.Add(indexRecord.Path,indexRecord);
-            RecordsByHash[indexRecord.Hash].Add(indexRecord);
-        }
     }
 
     public void WriteToIndex(IndexRecord item)
     {
         RecordsByPath[item.Path] = item;
-        RecordsByHash[item.Hash].Add(item);
         if (RecordsByHash.TryGetValue(item.Hash, out var value))
         {
             value.Add(item);
@@ -58,5 +49,26 @@ public class IndexService : IIndexService
     {
         RecordsByHash.TryGetValue(hash, out var list);
         return list;
+    }
+
+    public void Initialize()
+    {
+        var vcsRootDirectory = _fileSystemProvider.GetRootDirectory();
+        if (vcsRootDirectory == null) return;
+        var indexPath = _fileSystemProvider.GetRootDirectory()!.IndexFile;
+        var allLines = File.ReadAllLines(indexPath);
+        foreach (var line in allLines)
+        {
+            var indexRecord = new IndexRecord(line);
+            RecordsByPath.Add(indexRecord.Path,indexRecord);
+            if (RecordsByHash.TryGetValue(indexRecord.Hash, out var value))
+            {
+                value.Add(indexRecord);
+            }
+            else
+            {
+                RecordsByHash[indexRecord.Hash] = new List<IndexRecord>{ indexRecord };
+            }
+        }
     }
 }
