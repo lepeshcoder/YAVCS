@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using ConsoleApp2.Blob.Contracts;
 using ConsoleApp2.FileSystem.Contracts;
 using ConsoleApp2.Hash.Contracts;
@@ -18,8 +19,12 @@ public class BlobService : IBlobService
     public void WriteBlob(byte[] data)
     {
         var hash = _hashService.GetHash(data);
-        var blobPath = _fileSystemProvider.GetRootDirectory()!.BlobsDirectory + '/' + hash; 
-        File.WriteAllBytes(blobPath,data);
+        var blobPath = _fileSystemProvider.GetRootDirectory()!.BlobsDirectory + '/' + hash;
+        using var compressedStream = new MemoryStream();
+        using var compressionStream = new DeflateStream(compressedStream, CompressionMode.Compress);
+        compressionStream.Write(data, 0, data.Length);
+        var compressedData = compressedStream.ToArray();
+        File.WriteAllBytes(blobPath, compressedData);
     }
 
     public void DeleteBlob(string hash)
