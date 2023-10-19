@@ -1,6 +1,9 @@
 ﻿using ConsoleApp2.App;
 
 //TODO: THINK ABOUT FileAttributes in IndexRecord
+//TODO: STATUS REMOVE
+//TODO: GITIGNORE + FIX COMMANDS BY GITIGNORE
+//TODO: THINK ABOUT GARBAGE COLLECTION AND DONT REMOVING BLOBS
 
 App.Configure();
 App.Run(args);

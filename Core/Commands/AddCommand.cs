@@ -31,7 +31,7 @@ public class AddCommand : ICommand
     public string Description => "Add Files or directories into staging zone(index)";
     public void Execute(string[] args)
     {
-        if (args[0] == "help")
+        if (args.Length > 0 && args[0] == "help")
         {
             Console.WriteLine(Description);
             return;
@@ -42,8 +42,9 @@ public class AddCommand : ICommand
         {
             throw new RepositoryNotFoundException("Repository not found");
         }
-        
-        var itemToStage = args[0];
+
+        var currDir = Environment.CurrentDirectory;
+        var itemToStage = currDir + '/' + args[0];
         if (!File.Exists(itemToStage) && !Directory.Exists(itemToStage))
         {
             throw new ArgumentException(itemToStage + " not Found");
@@ -73,7 +74,9 @@ public class AddCommand : ICommand
                 var newRecord = new IndexRecord(oldRecord.Path, newHash, oldRecord.Attributes);  
                 _indexService.RemoveFromIndexByPath(oldRecord.Path);
                 _indexService.WriteToIndex(newRecord);
-                if (_indexService.GetRecordsByHash(oldRecord.Hash).Count == 1)  // if blob nas no reference can delete it
+                
+                
+                if (_indexService.GetRecordsByHash(oldRecord.Hash)!.Count == 1)  // if blob nas no reference can delete it
                 {
                     _blobService.DeleteBlob(oldRecord.Hash);
                 }
