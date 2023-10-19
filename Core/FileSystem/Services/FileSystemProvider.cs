@@ -1,20 +1,27 @@
 using ConsoleApp2.FileSystem.Contracts;
-using ConsoleApp2.FileSystem.FileSystemExceptions;
 
-namespace ConsoleApp2.FileSystem;
+namespace ConsoleApp2.FileSystem.Services;
 
-public class FileSystemProvider : IFlieSystemProvider
+public class FileSystemProvider : IFileSystemProvider
 {
+
+    private VcsRootDirectory? _vcsRootDirectory;
+    
     public VcsRootDirectory? GetRootDirectory()
     {
+        if (_vcsRootDirectory != null)
+        {
+            return _vcsRootDirectory;
+        }
         var currentDirectory = new DirectoryInfo(Environment.CurrentDirectory);
         while (currentDirectory != null)
         {
-            if (IsVcsRootDirectory(currentDirectory.Name))
+            if (IsVcsRootDirectory(currentDirectory.FullName))
             {
-                return new VcsRootDirectory(currentDirectory.Name);
+                _vcsRootDirectory = new VcsRootDirectory(currentDirectory.FullName);
+                return _vcsRootDirectory;
             }
-            currentDirectory = Directory.GetParent(currentDirectory.Name);
+            currentDirectory = Directory.GetParent(currentDirectory.FullName);
         }
         return null;
     }

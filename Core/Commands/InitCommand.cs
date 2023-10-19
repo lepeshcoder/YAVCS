@@ -6,11 +6,11 @@ namespace ConsoleApp2.Commands;
 
 public class InitCommand : ICommand
 {
-    private readonly IFlieSystemProvider _fileSystemProvider;
+    private readonly IFileSystemProvider _fileSystemProvider;
     
     public string Description => "Create a Repository if it doesn't exist"; 
     
-    public InitCommand(IFlieSystemProvider fileSystemProvider)
+    public InitCommand(IFileSystemProvider fileSystemProvider)
     {
         _fileSystemProvider = fileSystemProvider;
     }

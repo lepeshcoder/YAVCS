@@ -1,3 +1,5 @@
+using System.IO.Enumeration;
+using System.Reflection.PortableExecutable;
 using ConsoleApp2.Blob.Contracts;
 using ConsoleApp2.Commands.CommandsExceptions;
 using ConsoleApp2.Commands.Contracts;
@@ -12,12 +14,12 @@ namespace ConsoleApp2.Commands;
 public class AddCommand : ICommand
 {
 
-    private readonly IFlieSystemProvider _fileSystemProvider;
+    private readonly IFileSystemProvider _fileSystemProvider;
     private readonly IIndexService _indexService;
     private readonly IBlobService _blobService;
     private readonly IHashService _hashService;
     
-    public AddCommand(IFlieSystemProvider fileSystemProvider, IIndexService indexService,
+    public AddCommand(IFileSystemProvider fileSystemProvider, IIndexService indexService,
         IBlobService blobService, IHashService hashService)
     {
         _fileSystemProvider = fileSystemProvider;
@@ -42,7 +44,7 @@ public class AddCommand : ICommand
         }
         
         var itemToStage = args[0];
-        if (!File.Exists(itemToStage))
+        if (!File.Exists(itemToStage) && !Directory.Exists(itemToStage))
         {
             throw new ArgumentException(itemToStage + " not Found");
         }
@@ -57,7 +59,7 @@ public class AddCommand : ICommand
     private void StageFile(string filePath)
     {
         var byteArray = File.ReadAllBytes(filePath);
-        var newHash = _hashService.GetHash(filePath);                     // Calculate newHash
+        var newHash = _hashService.GetHash(byteArray);                     // Calculate newHash
         var oldRecord = _indexService.GetRecordByPath(filePath);               // Find old record
         
         if (oldRecord != null)                                                 // if File already added previosuly 
@@ -69,7 +71,7 @@ public class AddCommand : ICommand
             else                                                               // if File modified
             {
                 var newRecord = new IndexRecord(oldRecord.Path, newHash, oldRecord.Attributes);  
-                _indexService.RemoveFromIndexByHash(oldRecord.Hash);
+                _indexService.RemoveFromIndexByPath(oldRecord.Path);
                 _indexService.WriteToIndex(newRecord);
                 if (_indexService.GetRecordsByHash(oldRecord.Hash).Count == 1)  // if blob nas no reference can delete it
                 {

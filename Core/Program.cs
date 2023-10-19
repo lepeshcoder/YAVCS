@@ -1,28 +1,8 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using ConsoleApp2.App;
 
-using System.Net.Mime;
-using System.Threading.Channels;
-using ConsoleApp2;
-using ConsoleApp2.Commands;
-using ConsoleApp2.Commands.Contracts;
-using ConsoleApp2.FileSystem;
-using ConsoleApp2.FileSystem.Contracts;
-using Microsoft.Extensions.DependencyInjection; 
+//TODO: THINK ABOUT FileAttributes in IndexRecord
 
-
-var services = DependencyInjectionConfig.Configure();
-
-var commands = new Dictionary<string, ICommand>
-{
-    { "init", new InitCommand(services.GetRequiredService<IFlieSystemProvider>()) }
-};
-try
-{
-    commands[args[0]].Execute(args.Skip(1).ToArray());
-}
-catch (Exception e)
-{
-    Console.WriteLine(e);
-}
+App.Configure();
+App.Run(args);
 
  

@@ -9,12 +9,20 @@ public class IndexRecord
         Attributes = attributes;
     }
 
+    public IndexRecord(string line)
+    {
+        var parts = line.Split(' ');
+        Path = parts[0];
+        Hash = parts[1];
+        Attributes = FileAttributes.Normal;
+    }
+
     public string Path { get; }
     public string Hash { get; }
     public FileAttributes Attributes { get; }
 
     public override string ToString()
     {
-        throw new NotImplementedException();
+        return Path + ' ' + Hash + '\n';
     }
 }
