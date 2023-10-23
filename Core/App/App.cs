@@ -14,7 +14,7 @@ public static class App
 
     private static Dictionary<string, ICommand> _commands = new();
     private static readonly IServiceProvider Services = DependencyInjectionConfig.Configure();
-    
+
     public static void Configure()
     {
         try
@@ -60,9 +60,24 @@ public static class App
 
     public static void Run(string[] args)
     {
+        if (args.Length == 0 || args is ["--help"])
+        {
+            foreach (var command in _commands)
+            {
+                Console.WriteLine(command.Key + " : " + command.Value.Description + "\n");
+            }
+            return;
+        }
         try
         {
-            _commands[args[0]].Execute(args.Skip(1).ToArray());
+            if (_commands.ContainsKey(args[0]))
+            {
+                _commands[args[0]].Execute(args.Skip(1).ToArray());
+            }
+            else
+            {
+                throw new ArgumentException("UnSupported command\n");
+            }
         }
         catch (Exception e)
         {

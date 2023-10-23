@@ -31,7 +31,7 @@ public class AddCommand : ICommand
     public string Description => "Add Files or directories into staging zone(index)";
     public void Execute(string[] args)
     {
-        if (args.Length > 0 && args[0] == "help")
+        if (args.Length == 0 || args is ["--help"])
         {
             Console.WriteLine(Description);
             return;
@@ -44,7 +44,7 @@ public class AddCommand : ICommand
         }
 
         var currDir = Environment.CurrentDirectory;
-        var itemToStage = currDir + '/' + args[0];
+        var itemToStage = (currDir + '\\' + args[0]).Replace('/', '\\');
         if (!File.Exists(itemToStage) && !Directory.Exists(itemToStage))
         {
             throw new ArgumentException(itemToStage + " not Found");
@@ -55,6 +55,8 @@ public class AddCommand : ICommand
         else if (Directory.Exists(itemToStage))
             StageDirectory(itemToStage);
         else throw new NotSupportedFileSystemEntryException("item isn't file or directory");
+        
+        Console.WriteLine(itemToStage + " successfully staged");
     }
 
     private void StageFile(string filePath)
@@ -63,9 +65,9 @@ public class AddCommand : ICommand
         var newHash = _hashService.GetHash(byteArray);                     // Calculate newHash
         var oldRecord = _indexService.GetRecordByPath(filePath);               // Find old record
         
-        if (oldRecord != null)                                                 // if File already added previosuly 
+        if (_indexService.IsFileStaged(filePath))                              // if File already added previosuly 
         {
-            if (newHash == oldRecord.Hash)                                     // if File isn't modify
+            if (newHash == oldRecord!.Hash)                                     // if File isn't modify
             {
                 throw new ArgumentException("Item is already staged");
             }
@@ -101,8 +103,11 @@ public class AddCommand : ICommand
     {
         foreach (var itemPath in Directory.GetFileSystemEntries(dirPath))
         {
-            if(File.Exists(itemPath))
-                StageFile(itemPath);
+            if (File.Exists(itemPath))
+            {
+                if(!_indexService.IsFileStaged(itemPath))
+                    StageFile(itemPath);
+            }
             else if (Directory.Exists(itemPath))
                 StageDirectory(itemPath);
             else throw new NotSupportedFileSystemEntryException(itemPath + "isn't file or directory");

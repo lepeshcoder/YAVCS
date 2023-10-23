@@ -19,7 +19,7 @@ public class BlobService : IBlobService
     public void WriteBlob(byte[] data)
     {
         var hash = _hashService.GetHash(data);
-        var blobPath = _fileSystemProvider.GetRootDirectory()!.BlobsDirectory + '/' + hash;
+        var blobPath = _fileSystemProvider.GetRootDirectory()!.BlobsDirectory + '\\' + hash;
         using var compressedStream = new MemoryStream();
         using var compressionStream = new DeflateStream(compressedStream, CompressionMode.Compress);
         compressionStream.Write(data, 0, data.Length);
@@ -29,13 +29,13 @@ public class BlobService : IBlobService
 
     public void DeleteBlob(string hash)
     {
-        var blobPath =_fileSystemProvider.GetRootDirectory()!.BlobsDirectory + '/' + hash; 
+        var blobPath =_fileSystemProvider.GetRootDirectory()!.BlobsDirectory + '\\' + hash; 
         File.Delete(blobPath);
     }
 
     public bool IsBlobExist(string hash)
     {
-        var blobPath = _fileSystemProvider.GetRootDirectory()!.BlobsDirectory + '/' + hash;
+        var blobPath = _fileSystemProvider.GetRootDirectory()!.BlobsDirectory + '\\' + hash;
         return File.Exists(blobPath);
     }
 }

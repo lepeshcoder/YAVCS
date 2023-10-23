@@ -1,3 +1,5 @@
+using ConsoleApp2.FileSystem.Contracts;
+
 namespace ConsoleApp2.Index;
 
 public class IndexRecord
@@ -14,7 +16,7 @@ public class IndexRecord
         var parts = line.Split(' ');
         Path = parts[0];
         Hash = parts[1];
-        Attributes = FileAttributes.Normal;
+        Attributes = (FileAttributes)int.Parse(parts[2]);
     }
 
     public string Path { get; }
@@ -23,6 +25,6 @@ public class IndexRecord
 
     public override string ToString()
     {
-        return Path + ' ' + Hash + '\n';
+        return Path + ' ' + Hash + ' ' + (int)Attributes + '\n';
     }
 }

@@ -9,5 +9,6 @@ public interface IIndexService
     void WriteToIndex(IndexRecord item);
     void RemoveFromIndexByPath(string path);
     IndexRecord? GetRecordByPath(string path);
+    bool IsFileStaged(string path);
     List<IndexRecord>? GetRecordsByHash(string path);
 }

@@ -23,7 +23,7 @@ public class UnStageCommand : ICommand
     public string Description => "Remove item from staging zone(index)";
     public void Execute(string[] args)
     {
-        if (args.Length > 0 && args[0] == "help")
+        if (args.Length == 0 || args is ["--help"])
         {
             Console.WriteLine(Description);
             return;
@@ -36,7 +36,7 @@ public class UnStageCommand : ICommand
         }
 
         var currDir = Environment.CurrentDirectory;
-        var itemPath = currDir + '/' + args[0];
+        var itemPath = (currDir + '\\' + args[0]).Replace('/', '\\');;
         if (!File.Exists(itemPath) && !Directory.Exists(itemPath))
         {
             throw new ArgumentException(itemPath + " not Found");
@@ -54,18 +54,19 @@ public class UnStageCommand : ICommand
         {
             throw new NotSupportedFileSystemEntryException(itemPath + "isn't file or directory");
         }
+
+        Console.WriteLine(itemPath + "successfully unStaged");
     }
 
     private void UnStageFile(string itemPath)
     {
-        var indexRecord = _indexService.GetRecordByPath(itemPath);
-        if (indexRecord == null)
+        if (!_indexService.IsFileStaged(itemPath))
         {
             throw new ArgumentException("File isn't staged yet");
         }
-        
+        var indexRecord = _indexService.GetRecordByPath(itemPath);
         _indexService.RemoveFromIndexByPath(itemPath);
-        if (_indexService.GetRecordsByHash(indexRecord.Hash)!.Count == 1)
+        if (_indexService.GetRecordsByHash(indexRecord!.Hash)!.Count == 1)
         {
             _blobService.DeleteBlob(indexRecord.Hash);
         }
@@ -75,8 +76,11 @@ public class UnStageCommand : ICommand
     {
         foreach (var entryPath in Directory.GetFileSystemEntries(itemPath))
         {
-            if(File.Exists(entryPath))
-                UnStageFile(entryPath);
+            if (File.Exists(entryPath))
+            {
+                if(_indexService.IsFileStaged(entryPath))
+                    UnStageFile(entryPath);
+            }
             else if (Directory.Exists(entryPath))
                 UnStageDirectory(entryPath);
             else throw new NotSupportedFileSystemEntryException(entryPath + "isn't file or directory");

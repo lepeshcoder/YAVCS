@@ -35,7 +35,7 @@ public class IndexService : IIndexService
         var recordToRemove = RecordsByPath[path];
         RecordsByPath.Remove(path);
         RecordsByHash[recordToRemove.Hash].Remove(recordToRemove);
-        var rewriteRecords = RecordsByPath.Select(record => record.ToString()).ToList();
+        var rewriteRecords = RecordsByPath.Select(record => record.Value.ToString()).ToList();
         File.WriteAllLines(_fileSystemProvider.GetRootDirectory()!.IndexFile,rewriteRecords.ToArray());
     }
     
@@ -43,6 +43,11 @@ public class IndexService : IIndexService
     {
         RecordsByPath.TryGetValue(path, out var record);
         return record;
+    }
+
+    public bool IsFileStaged(string path)
+    {
+        return RecordsByPath.TryGetValue(path, out var value);
     }
 
     public List<IndexRecord>? GetRecordsByHash(string hash)
@@ -59,6 +64,7 @@ public class IndexService : IIndexService
         var allLines = File.ReadAllLines(indexPath);
         foreach (var line in allLines)
         {
+            if(line == "") continue;
             var indexRecord = new IndexRecord(line);
             RecordsByPath.Add(indexRecord.Path,indexRecord);
             if (RecordsByHash.TryGetValue(indexRecord.Hash, out var value))

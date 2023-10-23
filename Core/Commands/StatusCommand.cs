@@ -13,18 +13,19 @@ public class StatusCommand : ICommand
     private readonly IIndexService _indexService;
     private readonly IFileSystemProvider _fileSystemProvider;
     private readonly IHashService _hashService;
-    
+
     public StatusCommand(IIndexService indexService, IFileSystemProvider fileSystemProvider, IHashService hashService)
     {
         _indexService = indexService;
         _fileSystemProvider = fileSystemProvider;
         _hashService = hashService;
     }
-    
+
     public string Description => "View tracked/untracked/modified files";
+
     public void Execute(string[] args)
     {
-        if (args.Length > 0 && args[0] == "help")
+        if (args is ["--help"])
         {
             Console.WriteLine(Description);
             return;
@@ -35,7 +36,7 @@ public class StatusCommand : ICommand
         {
             throw new RepositoryNotFoundException("Repository not found");
         }
-        
+
         ShowStatus();
     }
 
@@ -45,8 +46,7 @@ public class StatusCommand : ICommand
 
         var stagedItems = new List<string>();
         var unStagedItems = new List<string>();
-        var unTrackedItems = new List<string>();
-
+        
         foreach (var indexRecord in indexRecords)
         {
             var itemPath = indexRecord.Value.Path;
@@ -71,19 +71,42 @@ public class StatusCommand : ICommand
 
         var vcsRootDirectoryPath = _fileSystemProvider.GetRootDirectory()!.RootDirectory;
         var repositoryRootDirectory = Directory.GetParent(vcsRootDirectoryPath)?.FullName;
+        var unTrackedItems = GetDirectoryStatus(repositoryRootDirectory!);
 
-        foreach (var itemPath in Directory.GetFileSystemEntries(repositoryRootDirectory!))
-        {
-            if (!indexRecords.ContainsKey(itemPath))
-                unTrackedItems.Add(itemPath);
-        }
-
-        var response = stagedItems.Aggregate("Staged files:\n", (current, stagedItem) => current + (stagedItem + "\n"));
-        response += "UnStaged Files:\n";
+        var response =
+            stagedItems.Aggregate("\nStaged files:\n", (current, stagedItem) => current + (stagedItem + "\n"));
+        response += "\nUnStaged Files:\n";
         response = unStagedItems.Aggregate(response, (current, unStagedItem) => current + (unStagedItem + "\n"));
-        response += "UnTracked Files:\n";
-        response = unTrackedItems.Aggregate(response, (current, unTrackedItem) => current + (unTrackedItem + "\n"));
-
+        response += "\nUnTracked Files:\n";
+        response += unTrackedItems;
+        
         Console.WriteLine(response);
     }
+
+    private string GetDirectoryStatus(string dirPath,bool isRoot = true)
+    {
+        var status = "";
+        var isDirHidden = true;
+        foreach (var entry in Directory.GetFileSystemEntries(dirPath))
+        {
+            if (Directory.Exists(entry))
+            {
+                var subDirStatus = GetDirectoryStatus(entry, false) + "\n";
+                var lines = subDirStatus.Split("\n");
+                if (!Directory.Exists(lines[0])) isDirHidden = false;
+                status += subDirStatus;
+            }
+            else if(File.Exists(entry))
+            {
+                if (!_indexService.IsFileStaged(entry))
+                    status += entry + "\n";
+                else isDirHidden = false;
+            }
+        }
+        if (isRoot) return status;
+        return isDirHidden ? dirPath : status;
+    }
+
+
 }
+

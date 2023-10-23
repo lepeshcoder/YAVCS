@@ -18,16 +18,20 @@ public class InitCommand : ICommand
     public void Execute(string[] args)
     {
         var currentDirectoryPath = Environment.CurrentDirectory;
-        if (args[0] == "help")
+        
+        if (args is ["--help"])
         {
             Console.WriteLine(Description);
             return;
         }
+        
+
         if (_fileSystemProvider.IsVcsRootDirectory(currentDirectoryPath))
         {
             throw new RepositoryAlreadyExistsException("Repository Already exists");
         }
         CreateVcsRootDirectory(currentDirectoryPath);
+        Console.WriteLine("Empty Repository created successfully");
     }
 
     private static void CreateVcsRootDirectory(string path)
