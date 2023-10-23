@@ -37,10 +37,10 @@ public class StatusCommand : ICommand
             throw new RepositoryNotFoundException("Repository not found");
         }
 
-        ShowStatus();
+        Console.WriteLine(GetStatus());
     }
 
-    private void ShowStatus()
+    private string GetStatus()
     {
         var indexRecords = _indexService.RecordsByPath;
 
@@ -73,38 +73,37 @@ public class StatusCommand : ICommand
         var repositoryRootDirectory = Directory.GetParent(vcsRootDirectoryPath)?.FullName;
         var unTrackedItems = GetDirectoryStatus(repositoryRootDirectory!);
 
-        var response =
-            stagedItems.Aggregate("\nStaged files:\n", (current, stagedItem) => current + (stagedItem + "\n"));
+        var response = stagedItems.Aggregate("\nStaged files:\n", (current, stagedItem) => current + (stagedItem + "\n"));
         response += "\nUnStaged Files:\n";
         response = unStagedItems.Aggregate(response, (current, unStagedItem) => current + (unStagedItem + "\n"));
         response += "\nUnTracked Files:\n";
-        response += unTrackedItems;
-        
-        Console.WriteLine(response);
+        response = unTrackedItems.Aggregate(response, (current, unTrackedItem) => current + (unTrackedItem + "\n"));
+
+        return response;
     }
 
-    private string GetDirectoryStatus(string dirPath,bool isRoot = true)
+    private List<string> GetDirectoryStatus(string dirPath,bool isRoot = true)
     {
-        var status = "";
+        var status = new List<string>();
         var isDirHidden = true;
         foreach (var entry in Directory.GetFileSystemEntries(dirPath))
         {
             if (Directory.Exists(entry))
             {
-                var subDirStatus = GetDirectoryStatus(entry, false) + "\n";
-                var lines = subDirStatus.Split("\n");
-                if (!Directory.Exists(lines[0])) isDirHidden = false;
-                status += subDirStatus;
+                var subDirStatus = GetDirectoryStatus(entry, false);
+                if (subDirStatus.Count == 0) isDirHidden = false;
+                else if (!Directory.Exists(subDirStatus[0])) isDirHidden = false;
+                status.AddRange(subDirStatus);
             }
             else if(File.Exists(entry))
             {
                 if (!_indexService.IsFileStaged(entry))
-                    status += entry + "\n";
+                    status.Add(entry);
                 else isDirHidden = false;
             }
         }
         if (isRoot) return status;
-        return isDirHidden ? dirPath : status;
+        return isDirHidden ? new List<string>{dirPath} : status;
     }
 
 

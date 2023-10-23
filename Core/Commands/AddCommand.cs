@@ -42,7 +42,7 @@ public class AddCommand : ICommand
         {
             throw new RepositoryNotFoundException("Repository not found");
         }
-
+        
         var currDir = Environment.CurrentDirectory;
         var itemToStage = (currDir + '\\' + args[0]).Replace('/', '\\');
         if (!File.Exists(itemToStage) && !Directory.Exists(itemToStage))
